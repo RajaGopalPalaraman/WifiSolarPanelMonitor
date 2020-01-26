@@ -3,6 +3,7 @@ package com.example.wifisolarpanelmonitor;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
+import android.util.Log;
 
 import androidx.annotation.NonNull;
 
@@ -28,7 +29,7 @@ public class ReceiverThread extends Thread {
         void onConnectionClosed();
     }
 
-    public ReceiverThread(String ip, int port, StatusListener statusListener) {
+    ReceiverThread(String ip, int port, StatusListener statusListener) {
         this.ip = ip;
         this.port = port;
         mainThreadHandler = new Handler(Looper.getMainLooper());
@@ -64,24 +65,28 @@ public class ReceiverThread extends Thread {
             mainThreadHandler.post(statusListener::onConnectionEstablished);
             localHandler.sendEmptyMessage(RECEIVE_WHAT);
             Looper.loop();
-        } catch (IOException e) {
-            e.printStackTrace();
+        } catch (IOException ignored) {
+            mainThreadHandler.post(statusListener::onConnectionClosed);
         }
     }
 
-    public void close() {
-        localHandler.removeMessages(RECEIVE_WHAT);
-        localHandler.sendEmptyMessage(DISCONNECT_WHAT);
+    void close() {
+        if (localHandler != null) {
+            localHandler.removeMessages(RECEIVE_WHAT);
+            localHandler.sendEmptyMessage(DISCONNECT_WHAT);
+        }
     }
 
-    protected void receiveHandler() {
+    private void receiveHandler() {
         String data = wifiStreamReader.getNext();
         if (data == null) {
             close();
-        } else if (!data.isEmpty()) {
-            mainThreadHandler.post(() -> statusListener.onData(data));
-            localHandler.sendEmptyMessage(RECEIVE_WHAT);
+            return;
         }
+        if (!data.isEmpty()) {
+            mainThreadHandler.post(() -> statusListener.onData(data));
+        }
+        localHandler.sendEmptyMessage(RECEIVE_WHAT);
     }
 
 }

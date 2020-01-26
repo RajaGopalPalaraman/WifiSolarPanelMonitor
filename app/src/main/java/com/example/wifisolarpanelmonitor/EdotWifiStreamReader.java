@@ -23,22 +23,22 @@ public final class EdotWifiStreamReader implements Closeable {
     public String getNext()
     {
         StringBuilder s = new StringBuilder();
-        int tempInt = 0;
+        int tempInt;
         char tempChar;
         while (true)
         {
             try {
-                Log.d("Debugger",""+tempInt);
-                if (((tempInt = inputStream.read()) == -1)) {
+                tempInt = inputStream.read();
+                tempChar = (char) tempInt;
+                Log.d("Debugger","Single: "+tempChar);
+                if (tempInt == -1) {
                     break;
                 }
-                else if (tempInt == DELIMITER)
-                {
+                else if (tempChar == DELIMITER) {
+                    Log.d("Debugger", s.toString());
                     return s.toString();
                 }
-                else
-                {
-                    tempChar = (char) tempInt;
+                else {
                     s.append(tempChar);
                 }
             } catch (IOException e) {

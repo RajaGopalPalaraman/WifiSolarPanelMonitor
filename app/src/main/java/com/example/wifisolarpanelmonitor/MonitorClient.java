@@ -15,16 +15,51 @@ public class MonitorClient {
         void onConnectionClosed();
     }
 
+    private final String ip;
+    private final int port;
+
     private SolarData panel1 = new SolarData();
     private SolarData panel2 = new SolarData();
     private Listener listener;
+    private ReceiverThread receiverThread;
 
-    public MonitorClient(String ip, int port) {
-        new ReceiverThread(ip, port, new ReceiverThread.StatusListener() {
+    MonitorClient(String ip, int port) {
+        this.ip = ip;
+        this.port = port;
+    }
+
+    SolarData getPanel1() {
+        return panel1;
+    }
+
+    protected void setPanel1(SolarData panel1) {
+        this.panel1 = panel1;
+    }
+
+    SolarData getPanel2() {
+        return panel2;
+    }
+
+    protected void setPanel2(SolarData panel2) {
+        this.panel2 = panel2;
+    }
+
+    public Listener getListener() {
+        return listener;
+    }
+
+    void setListener(Listener listener) {
+        this.listener = listener;
+    }
+
+    void connect() {
+        receiverThread = new ReceiverThread(ip, port, new ReceiverThread.StatusListener() {
             private int i=0;
             @Override
             public void onConnectionEstablished() {
-                listener.onConnectionEstablished();
+                if (listener != null) {
+                    listener.onConnectionEstablished();
+                }
             }
 
             @Override
@@ -40,7 +75,7 @@ public class MonitorClient {
                     case 7: panel2.light = Integer.valueOf(data); break;
                 }
                 i++;
-                if (i == 8) {
+                if (i == 8 && listener != null) {
                     listener.onDataChanged();
                     i = 0;
                 }
@@ -48,32 +83,19 @@ public class MonitorClient {
 
             @Override
             public void onConnectionClosed() {
-                listener.onConnectionClosed();
+                if (listener != null) {
+                    listener.onConnectionClosed();
+                }
             }
-        }).start();
+        });
+        receiverThread.start();
     }
 
-    public SolarData getPanel1() {
-        return panel1;
+    void close() {
+        if (receiverThread != null) {
+            receiverThread.close();
+            receiverThread = null;
+        }
     }
 
-    protected void setPanel1(SolarData panel1) {
-        this.panel1 = panel1;
-    }
-
-    public SolarData getPanel2() {
-        return panel2;
-    }
-
-    protected void setPanel2(SolarData panel2) {
-        this.panel2 = panel2;
-    }
-
-    public Listener getListener() {
-        return listener;
-    }
-
-    public void setListener(Listener listener) {
-        this.listener = listener;
-    }
 }
