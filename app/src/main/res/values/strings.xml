@@ -1,3 +1,11 @@
 <resources>
     <string name="app_name">WifiSolarPanelMonitor</string>
+    <string name="light">Light</string>
+    <string name="temperature">Temperature</string>
+    <string name="current">Current</string>
+    <string name="voltage">Voltage</string>
+    <string-array name="panels">
+        <item>Panel 1</item>
+        <item>Panel 2</item>
+    </string-array>
 </resources>
